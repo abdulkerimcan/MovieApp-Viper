@@ -6,10 +6,12 @@
 //
 
 import Foundation
+import Combine
 
 enum ServiceError: Error {
     case invalidResponse
     case invalidData
+    case invalidURL
 }
 
 final class MovieService {
@@ -20,32 +22,24 @@ final class MovieService {
     
     private init() {}
     
-    
-    func fetchMovies(completion: @escaping (Result<MovieListResponse, Error>) -> () ) {
-        guard let url = ApiConstants.shared.popularMovies else { return }
+    func fetchMovies() -> AnyPublisher<MovieListResponse, Error> {
+        guard let url = ApiConstants.shared.popularMovies else { return  Fail(error: ServiceError.invalidURL).eraseToAnyPublisher()}
         var request = URLRequest(url: url)
         request.allHTTPHeaderFields = headers
-        session.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: MovieListResponse.self, decoder: JSONDecoder())
+            .mapError { error in
+                switch error {
+                case is URLError:
+                    return error
+                case is DecodingError:
+                    return error
+                default:
+                    return ServiceError.invalidResponse
+                }
             }
-            
-            guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
-                completion(.failure(ServiceError.invalidResponse))
-                return
-            }
-            
-            guard let data = data else {
-                completion(.failure(ServiceError.invalidData))
-                return
-            }
-            do {
-                let movies = try JSONDecoder().decode(MovieListResponse.self, from: data)
-                completion(.success(movies))
-            } catch {
-                completion(.failure(error))
-            }
-            
-        }.resume()
+            .eraseToAnyPublisher()
     }
 }

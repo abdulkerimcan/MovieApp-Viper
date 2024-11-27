@@ -7,6 +7,7 @@
 
 
 import UIKit
+import Combine
 
 //View
 
@@ -20,6 +21,8 @@ protocol HomeViewProtocol: AnyObject {
 
 protocol HomePresenterProtocol: AnyObject {
     func load()
+    func moviesCount() -> Int
+    func movieFor(index: Int) -> MovieResult?
     func selectMovie(index: Int)
 }
 
@@ -32,19 +35,8 @@ enum HomeViewPresenterOutput {
 // Interactor
 
 protocol HomeViewInteractorProtocol: AnyObject {
-    var delegate: HomeViewInteractorDelegate? { get set }
-    func load()
+    func load() -> AnyPublisher<MovieListResponse, Error>
     func selectMovie(index: Int)
-}
-
-enum HomeViewInteractorOutput {
-    case showMovieList([MovieResult])
-    case setLoading(Bool)
-    case showError(String)
-}
-
-protocol HomeViewInteractorDelegate: AnyObject {
-    func handleOutput(_ output: HomeViewInteractorOutput)
 }
 
 // Router

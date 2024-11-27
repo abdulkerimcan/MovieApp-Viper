@@ -32,6 +32,7 @@ final class HomeViewController: UIViewController, AlertPresentable {
         super.viewWillAppear(animated)
         presenter?.load()
     }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -90,12 +91,13 @@ extension HomeViewController: HomeViewProtocol {
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return movies.count
+        presenter?.moviesCount() ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let movie = presenter?.movieFor(index: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = movies[indexPath.row]._title
+        cell.textLabel?.text = movie?._title
         return cell
     }
 }
